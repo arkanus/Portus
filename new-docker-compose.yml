@@ -1,0 +1,38 @@
+web:
+  image: portus-web
+  command: puma -b tcp://0.0.0.0:3000 -w 3
+  links:
+    - db
+  volumes:
+    - ./tmp:/portus/tmp
+  ports:
+    - "3000:3000"
+
+crono:
+  image: portus-web
+  entrypoint: bundle exec crono
+  volumes:
+    - ./docker/registry:/registry
+  links:
+    - db
+
+db:
+  image: library/mariadb
+  environment:
+    MYSQL_USER: portus
+    MYSQL_PASSWORD: portus
+    MYSQL_ROOT_PASSWORD: portus
+
+registry:
+  image: registry:2.1.1
+  volumes:
+    - ./docker/registry:/registry
+    - /registry_data
+    - /registry
+  links:
+    - web
+  entrypoint: /registry/entry.sh
+  env_file: docker/environment
+  ports:
+    - 5000:5000
+    - 5001:5001 # required to access debug service
